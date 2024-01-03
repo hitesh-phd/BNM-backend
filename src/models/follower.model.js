@@ -1,12 +1,12 @@
 import mongoose, { Schema } from "mongoose";
 
-const subscriptionSchema = new Schema(
+const followerSchema = new Schema(
   {
-    subscriber: {
+    follower: {
       type: Schema.Types.ObjectId,
       ref: "User",
     },
-    channel: {
+    following: {
       type: Schema.Types.ObjectId,
       ref: "User",
     },
@@ -14,7 +14,4 @@ const subscriptionSchema = new Schema(
   { timestamps: true }
 );
 
-export const Subscription = new mongoose.model(
-  "Subscription",
-  subscriptionSchema
-);
+export const Follower = new mongoose.model("Follower", followerSchema);
