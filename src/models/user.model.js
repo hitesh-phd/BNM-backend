@@ -10,6 +10,14 @@ const userSchema = new Schema(
       unique: true,
       lowercase: true,
     },
+    username: {
+      type: String,
+      required: true,
+      index: true,
+      trim: true,
+      unique: true,
+      lowercase: true,
+    },
     companyName: {
       type: String,
       required: true,
@@ -113,7 +121,7 @@ userSchema.methods.generateAccessToken = function () {
     {
       _id: this._id,
       email: this.email,
-      companyName: this.companyName,
+      username: this.username,
       gstNumber: this.gstNumber,
     },
     process.env.ACCESS_TOKEN_SECRET,

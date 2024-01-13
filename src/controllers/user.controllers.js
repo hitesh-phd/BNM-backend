@@ -34,11 +34,11 @@ const registerUser = asyncHandler(async (req, res) => {
   // check for user creation
   // return response
 
-  const { gstNumber, password, companyName, mobileNumber, email } = req.body;
+  const { username, gstNumber, password, companyName, email } = req.body;
   //   if (!fullname) throw new ApiError(400, "fullname is required");
 
   if (
-    [gstNumber, password, companyName, mobileNumber, email].some(
+    [gstNumber, password, companyName, username, email].some(
       (feild) => feild?.trim() === ""
     )
   ) {
@@ -46,19 +46,16 @@ const registerUser = asyncHandler(async (req, res) => {
   }
 
   const existedUser = await User.findOne({
-    $or: [{ email }, { gstNumber }, { mobileNumber }],
+    $or: [{ email }, { gstNumber }, { username }],
   });
   if (existedUser)
-    throw new ApiError(
-      409,
-      "User with email or gstNumber or mobileNumber exist"
-    );
+    throw new ApiError(409, "User with email or gstNumber or username exist");
 
   const user = await User.create({
     gstNumber,
     companyName,
     password,
-    mobileNumber,
+    username,
     email,
   });
 
@@ -84,12 +81,12 @@ const loginUser = asyncHandler(async (req, res) => {
   //access and refresh token
   //send cookie
 
-  const { email, mobileNumber, gstNumber, password } = req.body;
-  if (!(gstNumber || email || mobileNumber))
-    throw new ApiError(400, "gstNumber or email or mobileNumber is required");
+  const { email, username, gstNumber, password } = req.body;
+  if (!(gstNumber || email || username))
+    throw new ApiError(400, "gstNumber or email or username is required");
 
   const user = await User.findOne({
-    $or: [{ gstNumber }, { email }, { mobileNumber }],
+    $or: [{ gstNumber }, { email }, { username }],
   });
   if (!user) throw new ApiError(404, "User does not exist");
   const isAuthenticated = await user.isValidPassword(password);
@@ -294,11 +291,11 @@ const updateUserCoverImage = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, user, "user coverImage updated successfully"));
 });
 
-const getUserChannelProfile = asyncHandler(async (req, res) => {
+const getUserProfile = asyncHandler(async (req, res) => {
   const { username } = req.params;
   if (!username?.trim()) throw new ApiError(400, "username is missing");
 
-  const channel = await User.aggregate([
+  const profile = await User.aggregate([
     {
       $match: {
         username: username?.toLowerCase(),
@@ -306,31 +303,31 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
     },
     {
       $lookup: {
-        from: "subscriptions",
+        from: "followers",
         localField: "_id",
-        foreignField: "channel",
-        as: "subscribers",
+        foreignField: "company",
+        as: "followers",
       },
     },
     {
       $lookup: {
-        from: "subscriptions",
+        from: "followers",
         localField: "_id",
-        foreignField: "subscriber",
-        as: "subscribedTo",
+        foreignField: "follower",
+        as: "following",
       },
     },
     {
       $addFields: {
-        subscribersCount: {
-          $size: "$subscribers",
+        followersCount: {
+          $size: "$followers",
         },
-        channelsSubscribedToCount: {
-          $size: "$subscribedTo",
+        companyFollowingCount: {
+          $size: "$following",
         },
-        isSubscribed: {
+        isFollowing: {
           $cond: {
-            if: { $in: [req.user?._id, "$subscribers.subscriber"] },
+            if: { $in: [req.user?._id, "$followers.follower"] },
             then: true,
             else: false,
           },
@@ -339,23 +336,28 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
     },
     {
       $project: {
-        fullname: 1,
+        gstNumber: 1,
         username: 1,
-        subscribersCount: 1,
-        channelsSubscribedToCount: 1,
+        companyName: 1,
+        ownerFullName: 1,
+        hqLocation: 1,
+        serviceLocation: 1,
+        yearOfEstablishment: 1,
+        socialLink: 1,
+        followersCount: 1,
+        companyFollowingCount: 1,
         avatar: 1,
         coverImage: 1,
-        email: 1,
-        isSubscribed: 1,
+        isFollowing: 1,
       },
     },
   ]);
 
-  if (!channel?.length) throw new ApiError(404, "Channel not found");
+  if (!profile?.length) throw new ApiError(404, "Company not found");
 
   return res
     .status(200)
-    .json(new ApiResponse(200, channel[0], "User channel get successfully"));
+    .json(new ApiResponse(200, profile[0], "User company get successfully"));
 });
 
 export {
@@ -368,5 +370,5 @@ export {
   updateAccountDetails,
   updateUserAvatar,
   updateUserCoverImage,
-  getUserChannelProfile,
+  getUserProfile,
 };

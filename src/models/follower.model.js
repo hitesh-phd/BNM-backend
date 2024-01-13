@@ -6,7 +6,7 @@ const followerSchema = new Schema(
       type: Schema.Types.ObjectId,
       ref: "User",
     },
-    following: {
+    company: {
       type: Schema.Types.ObjectId,
       ref: "User",
     },
