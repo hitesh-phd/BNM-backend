@@ -34,36 +34,31 @@ const registerUser = asyncHandler(async (req, res) => {
   // check for user creation
   // return response
 
-  const { username, email, fullname, password } = req.body;
+  const { gstNumber, password, companyName, mobileNumber, email } = req.body;
   //   if (!fullname) throw new ApiError(400, "fullname is required");
 
   if (
-    [fullname, username, email, password].some((feild) => feild?.trim() === "")
+    [gstNumber, password, companyName, mobileNumber, email].some(
+      (feild) => feild?.trim() === ""
+    )
   ) {
     throw new ApiError(400, "all fields are required");
   }
 
-  const existedUser = await User.findOne({ $or: [{ email }, { username }] });
-  if (existedUser) throw new ApiError(409, "User with email or username exist");
-
-  const avatarLocalPath = req.files?.avatar[0]?.path;
-  const coverImageLocalPath = req.files?.coverImage[0]?.path;
-  if (!avatarLocalPath) throw new ApiError(400, "Avatar file is required 1st");
-
-  const avatar = await uploadOnCloudinary(avatarLocalPath);
-
-  const coverImage = coverImageLocalPath
-    ? await uploadOnCloudinary(coverImageLocalPath)
-    : "";
-
-  if (!avatar) throw new ApiError(400, "Avatar file is required");
+  const existedUser = await User.findOne({
+    $or: [{ email }, { gstNumber }, { mobileNumber }],
+  });
+  if (existedUser)
+    throw new ApiError(
+      409,
+      "User with email or gstNumber or mobileNumber exist"
+    );
 
   const user = await User.create({
-    fullname,
-    avatar: avatar.url,
-    coverImage: coverImage?.url || "",
-    username: username.toLowerCase(),
+    gstNumber,
+    companyName,
     password,
+    mobileNumber,
     email,
   });
 
@@ -89,11 +84,13 @@ const loginUser = asyncHandler(async (req, res) => {
   //access and refresh token
   //send cookie
 
-  const { email, username, password } = req.body;
-  if (!(username || email))
-    throw new ApiError(400, "username or email is required");
+  const { email, mobileNumber, gstNumber, password } = req.body;
+  if (!(gstNumber || email || mobileNumber))
+    throw new ApiError(400, "gstNumber or email or mobileNumber is required");
 
-  const user = await User.findOne({ $or: [{ username }, { email }] });
+  const user = await User.findOne({
+    $or: [{ gstNumber }, { email }, { mobileNumber }],
+  });
   if (!user) throw new ApiError(404, "User does not exist");
   const isAuthenticated = await user.isValidPassword(password);
 
@@ -196,25 +193,62 @@ const getCurrentUser = asyncHandler(async (req, res) => {
 });
 
 const updateAccountDetails = asyncHandler(async (req, res) => {
-  const { fullname, email } = req.body;
-  if (!fullname || !email) {
-    throw new ApiError(400, "all feilds required");
-  }
+  const {
+    gstNumber,
+    companyName,
+    mobileNumber,
+    ownerFullName,
+    hqLocation,
+    serviceLocation,
+    yearOfEstablishment,
+    socialLink,
+  } = req.body;
+
+  const userFields = Object.keys(userSchema.obj);
+  const validUpdateFields = {};
+
+  // Only include valid fields from userSchema in the update
+  userFields.forEach((field) => {
+    if (
+      req.body.hasOwnProperty(field) &&
+      [
+        "gstNumber",
+        "companyName",
+        "mobileNumber",
+        "ownerFullName",
+        "hqLocation",
+        "serviceLocation",
+        "yearOfEstablishment",
+        "socialLink",
+      ].includes(field)
+    ) {
+      // Handle socialLink array
+      if (field === "socialLink" && Array.isArray(req.body[field])) {
+        // Validate each object in the array
+        validUpdateFields[field] = req.body[field].map((link) => {
+          return {
+            insta: link.insta || null,
+            fb: link.fb || null,
+            twitter: link.twitter || null,
+            thread: link.thread || null,
+            yt: link.yt || null,
+          };
+        });
+      } else if (field !== "socialLink") {
+        validUpdateFields[field] = req.body[field];
+      }
+    }
+  });
 
   const user = await User.findByIdAndUpdate(
     req.user?._id,
-    {
-      $set: {
-        fullname,
-        email,
-      },
-    },
+    { $set: validUpdateFields },
     { new: true }
   ).select("-password");
 
   return res
     .status(200)
-    .json(new ApiResponse(200, user, "user updated successfully"));
+    .json(new ApiResponse(200, user, "User updated successfully"));
 });
 
 const updateUserAvatar = asyncHandler(async (req, res) => {
@@ -324,60 +358,6 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, channel[0], "User channel get successfully"));
 });
 
-const getWatchHistory = asyncHandler(async (req, res) => {
-  const user = await User.aggregate([
-    {
-      $match: {
-        _id: new mongoose.Types.ObjectId(req.user._id),
-      },
-    },
-    {
-      $lookup: {
-        from: "videos",
-        localField: "watchHistory",
-        foreignField: "_id",
-        as: "watchHistory",
-        pipeline: [
-          {
-            $lookup: {
-              from: "users",
-              localField: "owner",
-              foreignField: "_id",
-              as: "owner",
-              pipeline: [
-                {
-                  $project: {
-                    fullname: 1,
-                    username: 1,
-                    avatar: 1,
-                  },
-                },
-              ],
-            },
-          },
-          {
-            $addFields: {
-              owner: {
-                $first: "$owner",
-              },
-            },
-          },
-        ],
-      },
-    },
-  ]);
-
-  return res
-    .status(200)
-    .json(
-      new ApiResponse(
-        200,
-        user[0].watchHistory,
-        "user watch history fetched successfully"
-      )
-    );
-});
-
 export {
   registerUser,
   loginUser,
@@ -389,5 +369,4 @@ export {
   updateUserAvatar,
   updateUserCoverImage,
   getUserChannelProfile,
-  getWatchHistory,
 };

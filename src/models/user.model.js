@@ -1,28 +1,18 @@
 import mongoose, { Schema } from "mongoose";
 import jwt from "jsonwebtoken";
-import bcrypt from "bcrypt";
+import bcrypt, { compare } from "bcrypt";
 
 const userSchema = new Schema(
   {
-    username: {
-      type: String,
-      required: true,
-      unique: true,
-      lowercase: true,
-      trim: true,
-      index: true,
-    },
     gstNumber: {
       type: String,
       required: true,
       unique: true,
       lowercase: true,
-      trim: true,
     },
     companyName: {
       type: String,
       required: true,
-      trim: true,
       index: true,
     },
     mobileNumber: {
@@ -49,20 +39,19 @@ const userSchema = new Schema(
         message: (props) => `${props.value} is not a valid email address!`,
       },
     },
+    isMailVerified: {
+      type: Boolean,
+      default: false,
+    },
     ownerFullName: {
       type: String,
       required: true,
-      trim: true,
     },
     hqLocation: {
       type: String,
-      trim: true,
-      index: true,
     },
     serviceLocation: {
       type: String,
-      trim: true,
-      index: true,
     },
     password: {
       type: String,
@@ -79,20 +68,21 @@ const userSchema = new Schema(
     industry: {
       type: Schema.Types.ObjectId,
       ref: "Industry",
-      required: true,
     },
     service: {
       type: String,
       trim: true,
-      required: true,
     },
     yearOfEstablishment: {
-      type: Date,
-      required: true,
+      type: String,
     },
     socialLink: [
       {
-        type: String,
+        insta: { type: String },
+        fb: { type: String },
+        twitter: { type: String },
+        thread: { type: String },
+        yt: { type: String },
       },
     ],
     avatar: {
@@ -123,8 +113,8 @@ userSchema.methods.generateAccessToken = function () {
     {
       _id: this._id,
       email: this.email,
-      username: this.username,
-      buisnessName: this.buisnessName,
+      companyName: this.companyName,
+      gstNumber: this.gstNumber,
     },
     process.env.ACCESS_TOKEN_SECRET,
     {
