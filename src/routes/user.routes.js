@@ -3,7 +3,6 @@ import {
   changePassword,
   getCurrentUser,
   getUserChannelProfile,
-  getWatchHistory,
   loginUser,
   logoutUser,
   refreshAccessToken,
