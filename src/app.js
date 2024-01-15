@@ -121,16 +121,16 @@ app.use("/api/v1/bnm/verify-gstn", gstnRouter);
 
 // * API DOCS
 // ? Keeping swagger code at the end so that we can load swagger on "/" route
-app.use(
-  "/",
-  swaggerUi.serve,
-  swaggerUi.setup(swaggerDocument, {
-    swaggerOptions: {
-      docExpansion: "none", // keep all the sections collapsed by default
-    },
-    customSiteTitle: "FreeAPI docs",
-  })
-);
+// app.use(
+//   "/",
+//   swaggerUi.serve,
+//   swaggerUi.setup(swaggerDocument, {
+//     swaggerOptions: {
+//       docExpansion: "none", // keep all the sections collapsed by default
+//     },
+//     customSiteTitle: "FreeAPI docs",
+//   })
+// );
 
 // common error handling middleware
 app.use(errorHandler);
