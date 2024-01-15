@@ -72,6 +72,7 @@ const userSchema = new Schema(
     companyName: {
       type: String,
       index: true,
+      default: null,
     },
     mobileNumber: {
       type: Number,
@@ -84,12 +85,15 @@ const userSchema = new Schema(
     },
     ownerFullName: {
       type: String,
+      default: null,
     },
     hqLocation: {
       type: String,
+      default: null,
     },
     serviceLocation: {
       type: String,
+      default: null,
     },
     industry: {
       type: Schema.Types.ObjectId,
@@ -97,6 +101,7 @@ const userSchema = new Schema(
     },
     service: {
       type: String,
+      default: null,
     },
     yearOfEstablishment: {
       type: Date,
@@ -113,9 +118,11 @@ const userSchema = new Schema(
     ],
     avatar: {
       type: String, // Cloudinary URL
+      default: null,
     },
     coverImage: {
       type: String, // Cloudinary URL
+      default: null,
     },
 
     refreshToken: {
