@@ -1,5 +1,6 @@
 import { v2 as cloudinary } from "cloudinary";
 import fs from "fs";
+import { removeLocalFile } from "./helpers.js";
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -20,7 +21,7 @@ const uploadOnCloudinary = async (localFilePath, publicId = null) => {
       console.log("File updated on Cloudinary", response.url);
 
       // Remove locally saved temp file
-      // fs.unlinkSync(localFilePath);
+      removeLocalFile(localFilePath);
 
       return response;
     } else {
@@ -30,11 +31,11 @@ const uploadOnCloudinary = async (localFilePath, publicId = null) => {
       });
 
       console.log("file uploaded successfully", response.url);
-      // fs.unlinkSync(localFilePath);
+      removeLocalFile(localFilePath);
       return response;
     }
   } catch (error) {
-    fs.unlinkSync(localFilePath); // remove locally saved temp file as upload operation got failed
+    removeLocalFile(localFilePath); // remove locally saved temp file as upload operation got failed
     return null;
   }
 };
