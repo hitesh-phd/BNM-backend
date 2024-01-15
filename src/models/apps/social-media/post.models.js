@@ -17,7 +17,7 @@ const postSchema = new Schema(
       type: [
         {
           url: String,
-          localPath: String,
+          public_id: String,
         },
       ],
       default: [],

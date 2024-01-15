@@ -12,6 +12,10 @@ import {
   getStaticFilePath,
   removeLocalFile,
 } from "../../../utils/helpers.js";
+import {
+  removeFromCloudinary,
+  uploadOnCloudinary,
+} from "../../../utils/cloudinary.js";
 
 /**
  * @param {import("express").Request} req
@@ -143,10 +147,10 @@ const createPost = asyncHandler(async (req, res) => {
    */
   const images =
     req.files.images && req.files.images?.length
-      ? req.files.images.map((image) => {
-          const imageUrl = getStaticFilePath(req, image.filename);
-          const imageLocalPath = getLocalPath(image.filename);
-          return { url: imageUrl, localPath: imageLocalPath };
+      ? req.files.images.map(async (image) => {
+          const imageLocalPath = image.path;
+          const uploadedImage = await uploadOnCloudinary(imageLocalPath, null);
+          return { url: uploadedImage.url, public_id: uploadedImage.public_id };
         })
       : [];
 
@@ -194,13 +198,7 @@ const updatePost = asyncHandler(async (req, res) => {
    */
   let images =
     // If user has uploaded new images then we have to create an object with new url and local path in the array format
-    req.files?.images && req.files.images?.length
-      ? req.files.images.map((image) => {
-          const imageUrl = getStaticFilePath(req, image.filename);
-          const imageLocalPath = getLocalPath(image.filename);
-          return { url: imageUrl, localPath: imageLocalPath };
-        })
-      : []; // if there are no new images uploaded we want to keep an empty array
+    req.files?.images && req.files.images?.length ? req.files.images : []; // if there are no new images uploaded we want to keep an empty array
 
   const existedImages = post.images.length; // total images already present in the post
   const newImages = images.length; // Newly uploaded images
@@ -225,6 +223,12 @@ const updatePost = asyncHandler(async (req, res) => {
         " images attached to the post."
     );
   }
+
+  images = images.map(async (image) => {
+    const imageLocalPath = image.path;
+    const uploadedImage = await uploadOnCloudinary(imageLocalPath, null);
+    return { url: uploadedImage.url, public_id: uploadedImage.public_id };
+  });
 
   // If above checks are passed. We need to merge the existing images and newly uploaded images
   images = [...post.images, ...images];
@@ -289,7 +293,8 @@ const removePostImage = asyncHandler(async (req, res) => {
 
   if (removedImage) {
     // remove the file from file system as well
-    removeLocalFile(removedImage.localPath);
+    // removeLocalFile(removedImage.localPath);
+    removeFromCloudinary(removedImage.public_id);
   }
 
   const aggregatedPost = await SocialPost.aggregate([
