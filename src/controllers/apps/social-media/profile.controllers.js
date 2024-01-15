@@ -4,11 +4,7 @@ import { SocialFollow } from "../../../models/apps/social-media/follow.models.js
 import { ApiError } from "../../../utils/ApiError.js";
 import { ApiResponse } from "../../../utils/ApiResponse.js";
 import { asyncHandler } from "../../../utils/asyncHandler.js";
-import {
-  getLocalPath,
-  getStaticFilePath,
-  removeLocalFile,
-} from "../../../utils/helpers.js";
+import { uploadOnCloudinary } from "../../../utils/cloudinary.js";
 
 /**
  *
@@ -153,38 +149,27 @@ const updateSocialProfile = asyncHandler(async (req, res) => {
 
 const updateCoverImage = asyncHandler(async (req, res) => {
   const coverImageLocalPath = req.file?.path;
+
+  const userId = req.user?._id;
+
+  const user = await User.findById(userId);
+  let publicId = null;
+  if (user.avatar.public_id) {
+    publicId = user.avatar.public_id;
+  }
+
   if (!coverImageLocalPath)
     throw new ApiError(400, "coverImage file is missing");
-  const coverImage = uploadOnCloudinary(coverImageLocalPath);
+  const coverImage = uploadOnCloudinary(coverImageLocalPath, publicId);
+
   if (!coverImage.url)
     throw new ApiError(400, "Error while uploading cover image");
-  const user = await User.findByIdAndUpdate(
-    req.user?._id,
-    {
-      $set: {
-        coverImage: coverImage.url,
-      },
-    },
-    { new: true }
-  ).select("-password");
-
-  return res
-    .status(200)
-    .json(new ApiResponse(200, user, "user coverImage updated successfully"));
-});
-
-const updateAvatar = asyncHandler(async (req, res) => {
-  // Check if user has uploaded an avatar
-  const avatarLocalPath = req.file?.path;
-  if (!avatarLocalPath) throw new ApiError(400, "avatar file is missing");
-  const avatar = uploadOnCloudinary(avatarLocalPath);
-  if (!avatar.url)
-    throw new ApiError(400, "Error while uploading avatar image");
   const updatedUser = await User.findByIdAndUpdate(
     req.user?._id,
     {
       $set: {
-        avatar: avatar.url,
+        "coverImage.url": coverImage.url,
+        "coverImage.public_id": coverImage.public_id,
       },
     },
     { new: true }
@@ -192,8 +177,41 @@ const updateAvatar = asyncHandler(async (req, res) => {
     "-password -refreshToken -emailVerificationToken -emailVerificationExpiry"
   );
 
-  // remove the old avatar
-  removeLocalFile(avatarLocalPath);
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(200, updatedUser, "user coverImage updated successfully")
+    );
+});
+
+const updateAvatar = asyncHandler(async (req, res) => {
+  // Check if user has uploaded an avatar
+  const avatarLocalPath = req.file?.path;
+  const userId = req.user?._id;
+
+  const user = await User.findById(userId);
+  let publicId = null;
+  if (user.avatar.public_id) {
+    publicId = user.avatar.public_id;
+  }
+
+  if (!avatarLocalPath) throw new ApiError(400, "avatar file is missing");
+  const avatar = await uploadOnCloudinary(avatarLocalPath, publicId);
+
+  if (!avatar.url)
+    throw new ApiError(400, "Error while uploading avatar image");
+  const updatedUser = await User.findByIdAndUpdate(
+    req.user?._id,
+    {
+      $set: {
+        "avatar.url": avatar.url,
+        "avatar.public_id": avatar.public_id,
+      },
+    },
+    { new: true }
+  ).select(
+    "-password -refreshToken -emailVerificationToken -emailVerificationExpiry"
+  );
 
   return res
     .status(200)

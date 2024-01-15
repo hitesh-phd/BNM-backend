@@ -117,12 +117,24 @@ const userSchema = new Schema(
       },
     ],
     avatar: {
-      type: String, // Cloudinary URL
-      default: null,
+      type: {
+        url: String,
+        public_id: String,
+      },
+      default: {
+        url: null,
+        public_id: null,
+      },
     },
     coverImage: {
-      type: String, // Cloudinary URL
-      default: null,
+      type: {
+        url: String,
+        public_id: String,
+      },
+      default: {
+        url: null,
+        public_id: null,
+      },
     },
 
     refreshToken: {

@@ -31,6 +31,7 @@
     "@faker-js/faker": "^8.0.2",
     "axios": "^1.6.5",
     "bcrypt": "^5.1.0",
+    "cloudinary": "^1.41.2",
     "cookie-parser": "^1.4.6",
     "cors": "^2.8.5",
     "dotenv": "^16.0.3",
