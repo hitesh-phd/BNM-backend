@@ -100,6 +100,7 @@ import socialProfileRouter from "./routes/apps/social-media/profile.routes.js";
 
 import chatRouter from "./routes/apps/chat-app/chat.routes.js";
 import messageRouter from "./routes/apps/chat-app/message.routes.js";
+import gstnRouter from "./routes/apps/verify-gstn/gstn.routes.js";
 
 // * healthcheck
 app.use("/api/v1/healthcheck", healthcheckRouter);
@@ -116,6 +117,7 @@ app.use("/api/v1/bnm/comments", socialCommentRouter);
 
 app.use("/api/v1/bnm/chats", chatRouter);
 app.use("/api/v1/bnm/messages", messageRouter);
+app.use("/api/v1/bnm/verify-gstn", gstnRouter);
 
 // * API DOCS
 // ? Keeping swagger code at the end so that we can load swagger on "/" route
