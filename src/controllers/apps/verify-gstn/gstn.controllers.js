@@ -18,15 +18,15 @@ const verifyGSTNController = asyncHandler(async (req, res) => {
     const response = await axios.get(
       `${GST_VERIFICATION_URL}/${gstNumber}/status`
     );
-    const { data } = response;
+    const { data } = response.data;
+    console.log("response", data);
 
     // Extract relevant information
-    const { lgnm, tradeNam, contacted, mbr, places_of_business, gtiFY } =
-      data.tax_payer;
+    const { lgnm, tradeNam, contacted, mbr, gtiFY } = data.tax_payer;
 
     const { mobNum, email } = contacted;
 
-    const { adr } = places_of_business.pradr;
+    const { adr } = data.places_of_business.pradr;
 
     // Create the result object
     const result = {
