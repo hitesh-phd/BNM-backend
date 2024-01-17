@@ -1,3 +1,5 @@
+import { ApiError } from "../../../utils/ApiError.js";
+import { ApiResponse } from "../../../utils/ApiResponse.js";
 import { asyncHandler } from "../../../utils/asyncHandler.js";
 
 import axios from "axios";
@@ -39,10 +41,12 @@ const verifyGSTNController = asyncHandler(async (req, res) => {
       yearOfEstablishment: gtiFY || "",
     };
 
-    return res.status(200).json(result);
+    return res
+      .status(200)
+      .json(new ApiResponse(200, result, "gst number verified"));
   } catch (error) {
     console.error("Error fetching GST data:", error.message);
-    return res.status(500).json({ error: "Internal Server Error" });
+    throw new ApiError(422, `invalid gst Number`);
   }
 });
 
