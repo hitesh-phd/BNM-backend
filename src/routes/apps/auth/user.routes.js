@@ -26,6 +26,7 @@ import {
   userChangeCurrentPasswordValidator,
   userForgotPasswordValidator,
   userLoginValidator,
+  usernameValidator,
   userRegisterValidator,
   userResetForgottenPasswordValidator,
 } from "../../../validators/apps/auth/user.validators.js";
@@ -38,7 +39,9 @@ const router = Router();
 // Unsecured route
 router.route("/register").post(userRegisterValidator(), validate, registerUser);
 router.route("/login").post(userLoginValidator(), validate, loginUser);
-router.route("/verify-username").post(verifyUsername);
+router
+  .route("/verify-username")
+  .post(usernameValidator(), validate, verifyUsername);
 router.route("/refresh-token").post(refreshAccessToken);
 router.route("/verify-email/:verificationToken").get(verifyEmail);
 
