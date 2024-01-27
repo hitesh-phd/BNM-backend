@@ -1,9 +1,6 @@
 import dotenv from "dotenv";
 import { httpServer } from "./app.js";
 import connectDB from "./db/index.js";
-import express from "express";
-import AdminJS from "adminjs";
-import AdminJSExpress from "@adminjs/express";
 
 dotenv.config({
   path: "./.env",
