@@ -34,7 +34,7 @@ const sendEmail = async (options) => {
   });
 
   const mail = {
-    from: "bnmindia<bnmindia@pixelhexhexdigital.com>", // We can name this anything. The mail will go to your Mailtrap inbox
+    from: process.env.MAILSENDER_NAME, // We can name this anything. The mail will go to your Mailtrap inbox
     to: options.email, // receiver's mail
     subject: options.subject, // mail subject
     text: emailTextual, // mailgen content textual variant
