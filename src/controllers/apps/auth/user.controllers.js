@@ -170,7 +170,9 @@ const verifyUsername = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Username  is required");
   }
 
-  const user = await User.findOne({ username });
+  const lowercaseUsername = username.toLowerCase();
+
+  const user = await User.findOne({ username: lowercaseUsername });
 
   if (user) {
     throw new ApiError(404, "User already exist");
