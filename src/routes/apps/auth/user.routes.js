@@ -8,6 +8,7 @@ import {
   getCurrentUser,
   handleSocialLogin,
   loginUser,
+  verifyUsername,
   logoutUser,
   refreshAccessToken,
   registerUser,
@@ -37,6 +38,7 @@ const router = Router();
 // Unsecured route
 router.route("/register").post(userRegisterValidator(), validate, registerUser);
 router.route("/login").post(userLoginValidator(), validate, loginUser);
+router.route("/verify-username").post(verifyUsername);
 router.route("/refresh-token").post(refreshAccessToken);
 router.route("/verify-email/:verificationToken").get(verifyEmail);
 

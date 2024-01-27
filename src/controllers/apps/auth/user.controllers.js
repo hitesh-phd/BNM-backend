@@ -163,6 +163,21 @@ const loginUser = asyncHandler(async (req, res) => {
       )
     );
 });
+const verifyUsername = asyncHandler(async (req, res) => {
+  const { username } = req.body;
+
+  if (!username) {
+    throw new ApiError(400, "Username  is required");
+  }
+
+  const user = await User.findOne({ username });
+
+  if (user) {
+    throw new ApiError(404, "User already exist");
+  }
+
+  return res.status(200).json(new ApiResponse(200, {}, "Username available"));
+});
 
 const logoutUser = asyncHandler(async (req, res) => {
   await User.findByIdAndUpdate(
@@ -473,6 +488,7 @@ export {
   getCurrentUser,
   handleSocialLogin,
   loginUser,
+  verifyUsername,
   logoutUser,
   refreshAccessToken,
   registerUser,
