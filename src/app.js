@@ -13,6 +13,11 @@ import swaggerUi from "swagger-ui-express";
 import { fileURLToPath } from "url";
 import YAML from "yaml";
 import { ApiError } from "./utils/ApiError.js";
+import AdminJSExpress from "@adminjs/express";
+import * as AdminJSMongoose from "@adminjs/mongoose";
+
+import AdminJS from "adminjs";
+import { User } from "./models/apps/auth/user.models.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -21,6 +26,27 @@ const file = fs.readFileSync(path.resolve(__dirname, "./swagger.yaml"), "utf8");
 const swaggerDocument = YAML.parse(file);
 
 const app = express();
+
+AdminJS.registerAdapter({
+  Resource: AdminJSMongoose.Resource,
+  Database: AdminJSMongoose.Database,
+});
+
+const admin = new AdminJS({
+  resources: [
+    User,
+    SocialPost,
+    SocialComment,
+    SocialFollow,
+    SocialLike,
+    ChatMessage,
+    Chat,
+  ],
+});
+
+const adminRouter = AdminJSExpress.buildRouter(admin);
+app.use(admin.options.rootPath, adminRouter);
+admin.watch();
 
 const httpServer = createServer(app);
 
@@ -101,6 +127,12 @@ import socialProfileRouter from "./routes/apps/social-media/profile.routes.js";
 import chatRouter from "./routes/apps/chat-app/chat.routes.js";
 import messageRouter from "./routes/apps/chat-app/message.routes.js";
 import gstnRouter from "./routes/apps/verify-gstn/gstn.routes.js";
+import { SocialPost } from "./models/apps/social-media/post.models.js";
+import { SocialComment } from "./models/apps/social-media/comment.models.js";
+import { SocialFollow } from "./models/apps/social-media/follow.models.js";
+import { SocialLike } from "./models/apps/social-media/like.models.js";
+import { ChatMessage } from "./models/apps/chat-app/message.models.js";
+import { Chat } from "./models/apps/chat-app/chat.models.js";
 
 // * healthcheck
 app.use("/api/v1/healthcheck", healthcheckRouter);

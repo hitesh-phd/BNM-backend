@@ -96,8 +96,7 @@ const userSchema = new Schema(
       default: null,
     },
     industry: {
-      type: Schema.Types.ObjectId,
-      ref: "Industry",
+      type: String,
     },
     service: {
       type: String,
