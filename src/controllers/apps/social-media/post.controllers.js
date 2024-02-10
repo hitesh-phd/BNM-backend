@@ -72,29 +72,18 @@ const postCommonAggregation = (req) => {
     },
     {
       $lookup: {
-        from: "socialprofiles",
+        from: "users",
         localField: "author",
-        foreignField: "owner",
+        foreignField: "_id",
         as: "author",
         pipeline: [
           {
-            $lookup: {
-              from: "users",
-              localField: "owner",
-              foreignField: "_id",
-              as: "account",
-              pipeline: [
-                {
-                  $project: {
-                    avatar: 1,
-                    email: 1,
-                    username: 1,
-                  },
-                },
-              ],
+            $project: {
+              avatar: 1,
+              email: 1,
+              username: 1,
             },
           },
-          { $addFields: { account: { $first: "$account" } } },
         ],
       },
     },
