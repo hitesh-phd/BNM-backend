@@ -3,6 +3,7 @@ import {
   followUnFollowUser,
   getFollowersListByUserName,
   getFollowingListByUserName,
+  getUserConnectionsAndRequests,
 } from "../../../controllers/apps/social-media/follow.controllers.js";
 import {
   getLoggedInUserOrIgnore,
@@ -29,5 +30,9 @@ router
 router
   .route("/list/following/:username")
   .get(getLoggedInUserOrIgnore, getFollowingListByUserName);
+
+router
+  .route("/list/connections/:username")
+  .get(getLoggedInUserOrIgnore, getUserConnectionsAndRequests);
 
 export default router;
