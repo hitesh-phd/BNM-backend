@@ -65,9 +65,7 @@ const getFollowersListByUserName = asyncHandler(async (req, res) => {
   const { page = 1, limit = 10 } = req.query;
 
   const user = await User.findOne({
-    $match: {
-      username: username.toLowerCase(),
-    },
+    username: username.toLowerCase(),
   });
 
   if (!user) {
@@ -194,7 +192,7 @@ const getFollowingListByUserName = asyncHandler(async (req, res) => {
   const { page = 1, limit = 10 } = req.query;
 
   const user = await User.findOne({
-    $match: { username: username.toLowerCase() },
+    username: username.toLowerCase(),
   });
 
   if (!user) {
@@ -314,8 +312,156 @@ const getFollowingListByUserName = asyncHandler(async (req, res) => {
     );
 });
 
+const getUserConnectionsAndRequests = asyncHandler(async (req, res) => {
+  const { username } = req.params;
+  const { page = 1, limit = 10 } = req.query;
+
+  const user = await User.findOne({ username: username.toLowerCase() });
+
+  if (!user) {
+    throw new ApiError(404, "User does not exist");
+  }
+
+  const userId = user._id;
+  const currentUser = await User.findById(userId).select(
+    "-password -refreshToken -emailVerificationToken -emailVerificationExpiry"
+  );
+
+  const connectionsAggregate = await SocialFollow.aggregate([
+    {
+      $facet: {
+        connections: [
+          {
+            $match: {
+              $or: [
+                { followerId: userId, followeeId: { $in: [userId] } },
+                { followeeId: userId, followerId: { $in: [userId] } },
+              ],
+            },
+          },
+          {
+            $group: {
+              _id: null,
+              users: {
+                $addToSet: {
+                  $cond: [
+                    { $eq: ["$followerId", userId] },
+                    "$followeeId",
+                    "$followerId",
+                  ],
+                },
+              },
+            },
+          },
+          {
+            $unwind: "$users",
+          },
+          {
+            $lookup: {
+              from: "users",
+              localField: "users",
+              foreignField: "_id",
+              as: "user",
+            },
+          },
+          {
+            $unwind: "$user",
+          },
+          {
+            $project: {
+              _id: 0,
+              user: {
+                avatar: 1,
+                email: 1,
+                username: 1,
+                ownerFullName: 1,
+                companyName: 1,
+              },
+            },
+          },
+        ],
+        requests: [
+          {
+            $match: {
+              followeeId: userId,
+              followerId: { $nin: [userId] },
+            },
+          },
+          {
+            $lookup: {
+              from: "users",
+              localField: "followerId",
+              foreignField: "_id",
+              as: "user",
+            },
+          },
+          {
+            $unwind: "$user",
+          },
+          {
+            $project: {
+              _id: 0,
+              username: "$user.username",
+              email: "$user.email",
+              companyName: "$user.companyName",
+              ownerFullName: "$user.ownerFullName",
+              avatar: "$user.avatar",
+            },
+          },
+        ],
+        following: [
+          {
+            $match: {
+              followerId: userId,
+              followeeId: { $nin: [userId] },
+            },
+          },
+          {
+            $lookup: {
+              from: "users",
+              localField: "followeeId",
+              foreignField: "_id",
+              as: "user",
+            },
+          },
+          {
+            $unwind: "$user",
+          },
+          {
+            $project: {
+              _id: 0,
+              username: "$user.username",
+              email: "$user.email",
+              companyName: "$user.companyName",
+              ownerFullName: "$user.ownerFullName",
+              avatar: "$user.avatar",
+            },
+          },
+        ],
+      },
+    },
+  ]);
+
+  const { connections, requests, following } = connectionsAggregate[0] || {
+    connections: [],
+    requests: [],
+    following: [],
+  };
+
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(
+        200,
+        { user: currentUser, connections, requests, following },
+        "Connections, requests, and following fetched successfully"
+      )
+    );
+});
+
 export {
   followUnFollowUser,
   getFollowersListByUserName,
   getFollowingListByUserName,
+  getUserConnectionsAndRequests,
 };

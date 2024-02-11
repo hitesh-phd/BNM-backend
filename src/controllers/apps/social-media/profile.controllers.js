@@ -96,7 +96,9 @@ const getMySocialProfile = asyncHandler(async (req, res) => {
 const getProfileByUserName = asyncHandler(async (req, res) => {
   const { username } = req.params;
 
-  const user = await User.findOne({ username });
+  const user = await User.findOne({
+    username: username.toLowerCase(),
+  });
 
   if (!user) {
     throw new ApiError(404, "User does not exist");
