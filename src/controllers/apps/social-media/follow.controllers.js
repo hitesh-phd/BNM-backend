@@ -64,49 +64,11 @@ const getFollowersListByUserName = asyncHandler(async (req, res) => {
   const { username } = req.params;
   const { page = 1, limit = 10 } = req.query;
 
-  const userAggregation = await User.aggregate([
-    {
-      $match: {
-        username: username.toLowerCase(),
-      },
+  const user = await User.findOne({
+    $match: {
+      username: username.toLowerCase(),
     },
-    {
-      $lookup: {
-        // lookup for the each user's profile
-        from: "socialprofiles",
-        localField: "_id",
-        foreignField: "owner",
-        as: "profile",
-        pipeline: [
-          {
-            $project: {
-              firstName: 1,
-              lastName: 1,
-              bio: 1,
-              location: 1,
-              countryCode: 1,
-              phoneNumber: 1,
-              coverImage: 1,
-            },
-          },
-        ],
-      },
-    },
-    {
-      $addFields: { profile: { $first: "$profile" } },
-    },
-    {
-      $project: {
-        username: 1,
-        email: 1,
-        isEmailVerified: 1,
-        avatar: 1,
-        profile: 1,
-      },
-    },
-  ]);
-
-  const user = userAggregation[0];
+  });
 
   if (!user) {
     throw new ApiError(404, "User does not exist");
@@ -129,15 +91,6 @@ const getFollowersListByUserName = asyncHandler(async (req, res) => {
         foreignField: "_id",
         as: "follower",
         pipeline: [
-          {
-            $lookup: {
-              // lookup for the each user's profile
-              from: "socialprofiles",
-              localField: "_id",
-              foreignField: "owner",
-              as: "profile",
-            },
-          },
           {
             // NOTE: In this logic we want to treat logged in user as a follower
             // LOGIC TO CHECK IF THE LOGGED IN USER IS FOLLOWING ANY OF THE FOLLOWERS
@@ -185,6 +138,8 @@ const getFollowersListByUserName = asyncHandler(async (req, res) => {
             $project: {
               // only project necessary fields
               username: 1,
+              ownerFullName: 1,
+              companyName: 1,
               email: 1,
               avatar: 1,
               profile: 1,
@@ -238,49 +193,9 @@ const getFollowingListByUserName = asyncHandler(async (req, res) => {
   const { username } = req.params;
   const { page = 1, limit = 10 } = req.query;
 
-  const userAggregation = await User.aggregate([
-    {
-      $match: {
-        username: username.toLowerCase(),
-      },
-    },
-    {
-      $lookup: {
-        // lookup for the each user's profile
-        from: "socialprofiles",
-        localField: "_id",
-        foreignField: "owner",
-        as: "profile",
-        pipeline: [
-          {
-            $project: {
-              firstName: 1,
-              lastName: 1,
-              bio: 1,
-              location: 1,
-              countryCode: 1,
-              phoneNumber: 1,
-              coverImage: 1,
-            },
-          },
-        ],
-      },
-    },
-    {
-      $addFields: { profile: { $first: "$profile" } },
-    },
-    {
-      $project: {
-        username: 1,
-        email: 1,
-        isEmailVerified: 1,
-        avatar: 1,
-        profile: 1,
-      },
-    },
-  ]);
-
-  const user = userAggregation[0];
+  const user = await User.findOne({
+    $match: { username: username.toLowerCase() },
+  });
 
   if (!user) {
     throw new ApiError(404, "User does not exist");
@@ -304,15 +219,6 @@ const getFollowingListByUserName = asyncHandler(async (req, res) => {
         foreignField: "_id",
         as: "following",
         pipeline: [
-          {
-            $lookup: {
-              // lookup for the each user's profile
-              from: "socialprofiles",
-              localField: "_id",
-              foreignField: "owner",
-              as: "profile",
-            },
-          },
           // NOTE: In this logic we want to treat logged in user as a follower
           // LOGIC TO CHECK IF THE LOGGED IN USER IS FOLLOWING ANY OF THE USERS THAT LOADED PROFILE USER FOLLOWING
           // Point to be noted: There are chances that the logged in user is seeing someone else's following list. SO if logged in user is seeing his own following list the isFollowing flag will be true
@@ -356,6 +262,8 @@ const getFollowingListByUserName = asyncHandler(async (req, res) => {
             $project: {
               // only project necessary fields
               username: 1,
+              ownerFullName: 1,
+              companyName: 1,
               email: 1,
               avatar: 1,
               profile: 1,

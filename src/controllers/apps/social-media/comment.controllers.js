@@ -54,38 +54,18 @@ const getPostComments = asyncHandler(async (req, res) => {
     },
     {
       $lookup: {
-        from: "socialprofiles",
+        from: "users",
         localField: "author",
-        foreignField: "owner",
+        foreignField: "_id",
         as: "author",
         pipeline: [
           {
-            $lookup: {
-              from: "users",
-              localField: "owner",
-              foreignField: "_id",
-              as: "account",
-              pipeline: [
-                {
-                  $project: {
-                    avatar: 1,
-                    email: 1,
-                    username: 1,
-                  },
-                },
-              ],
-            },
-          },
-          {
             $project: {
-              firstName: 1,
-              lastName: 1,
-              account: 1,
-            },
-          },
-          {
-            $addFields: {
-              account: { $first: "$account" },
+              avatar: 1,
+              email: 1,
+              username: 1,
+              ownerFullName: 1,
+              companyName: 1,
             },
           },
         ],

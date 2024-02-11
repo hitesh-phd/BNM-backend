@@ -82,6 +82,8 @@ const postCommonAggregation = (req) => {
               avatar: 1,
               email: 1,
               username: 1,
+              ownerFullName: 1,
+              companyName: 1,
             },
           },
         ],
