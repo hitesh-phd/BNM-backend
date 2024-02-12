@@ -33,10 +33,10 @@ const generateAccessAndRefreshTokens = async (userId) => {
 };
 
 const registerUser = asyncHandler(async (req, res) => {
-  const { username, password, role } = req.body;
+  const { username, email, gstNumber, password, role } = req.body;
 
   const existedUser = await User.findOne({
-    $or: [{ username: username }, { email: username }, { gstNumber: username }],
+    $or: [{ username }, { email }, { gstNumber }],
   });
 
   if (existedUser) {
@@ -102,14 +102,14 @@ const registerUser = asyncHandler(async (req, res) => {
 });
 
 const loginUser = asyncHandler(async (req, res) => {
-  const { gstNumber, email, username, password } = req.body;
+  const { username, password } = req.body;
 
-  if (!username && !email && !gstNumber) {
+  if (!username) {
     throw new ApiError(400, "Username or email or gstNumber is required");
   }
 
   const user = await User.findOne({
-    $or: [{ username }, { email }, { gstNumber }],
+    $or: [{ username: username }, { email: username }, { gstNumber: username }],
   });
 
   if (!user) {
