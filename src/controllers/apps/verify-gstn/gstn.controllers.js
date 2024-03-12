@@ -1,11 +1,11 @@
+import { gstData } from "../../../models/apps/gst-numbers/gstData.models.js";
 import { ApiError } from "../../../utils/ApiError.js";
 import { ApiResponse } from "../../../utils/ApiResponse.js";
 import { asyncHandler } from "../../../utils/asyncHandler.js";
-
 import axios from "axios";
 
 const GST_VERIFICATION_URL =
-  "https://sr1sf8ld8a.execute-api.ap-south-1.amazonaws.com/prod/gsp/gstin";
+  "https://app.signalx.ai/apps/gst-verification/gstin-overview";
 
 const verifyGSTNController = asyncHandler(async (req, res) => {
   try {
@@ -17,36 +17,74 @@ const verifyGSTNController = asyncHandler(async (req, res) => {
         .json({ error: "GST number is required in the request body" });
     }
 
-    const response = await axios.get(
-      `${GST_VERIFICATION_URL}/${gstNumber}/status`
-    );
-    const { data } = response.data;
-    console.log("response", data);
+    // Check if the GST number exists in the database
+    const existingData = await gstData.findOne({ gstNumber });
+
+    if (existingData) {
+      return res
+        .status(200)
+        .json(
+          new ApiResponse(
+            200,
+            existingData,
+            "GST number data found in the database"
+          )
+        );
+    }
+
+    // Continue with the GST number verification
+    const response = await axios.get(`${GST_VERIFICATION_URL}/${gstNumber}`);
+    const { data } = response;
 
     // Extract relevant information
-    const { lgnm, tradeNam, contacted, mbr, gtiFY } = data.tax_payer;
+    const {
+      gstin,
+      legal_business_name,
+      trade_name,
+      filings,
+      goods_and_services_list,
+      principal_place_of_business,
+      effective_date_of_reg,
+    } = data;
 
-    const { mobNum, email } = contacted;
-
-    const { adr } = data.places_of_business.pradr;
+    if (
+      !gstin &&
+      !legal_business_name &&
+      (!filings || filings.length === 0) &&
+      (!goods_and_services_list || goods_and_services_list.length === 0)
+    ) {
+      throw new ApiError(422, `Invalid GST Number`);
+    }
 
     // Create the result object
     const result = {
-      businessName: lgnm ? lgnm : tradeNam ? tradeNam : "",
-      mobileNumber: mobNum || "",
-      email: email || "",
-      ownerName: mbr,
-      hqLocation: adr || "",
-      serviceLocation: adr || "",
-      yearOfEstablishment: gtiFY || "",
+      gstNumber: gstin,
+      companyName: legal_business_name
+        ? legal_business_name
+        : trade_name
+        ? trade_name
+        : "",
+      mobileNumber: "",
+      email: "",
+      ownerName: "",
+      hqLocation: principal_place_of_business || "",
+      serviceLocation: principal_place_of_business || "",
+      yearOfEstablishment: effective_date_of_reg || "",
+      service: goods_and_services_list[0].goods_services_desc || [],
     };
+
+    // Store the data in the MongoDB database
+    const savedGSTData = await gstData.create(result);
 
     return res
       .status(200)
-      .json(new ApiResponse(200, result, "gst number verified"));
+      .json(
+        new ApiResponse(200, savedGSTData, "GST number verified and stored")
+      );
   } catch (error) {
+    console.error("Error fetching GST data:", error);
     console.error("Error fetching GST data:", error.message);
-    throw new ApiError(422, `invalid gst Number`);
+    throw new ApiError(422, `Invalid GST Number`);
   }
 });
 
