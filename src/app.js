@@ -28,6 +28,7 @@ const admin = new AdminJS({
     SocialLike,
     ChatMessage,
     Chat,
+    gstData,
   ],
 });
 
@@ -121,6 +122,7 @@ import { SocialFollow } from "./models/apps/social-media/follow.models.js";
 import { SocialLike } from "./models/apps/social-media/like.models.js";
 import { ChatMessage } from "./models/apps/chat-app/message.models.js";
 import { Chat } from "./models/apps/chat-app/chat.models.js";
+import { gstData } from "./models/apps/gst-numbers/gstData.models.js";
 
 // * healthcheck
 app.use("/api/v1/healthcheck", healthcheckRouter);
