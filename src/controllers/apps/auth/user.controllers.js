@@ -11,6 +11,7 @@ import {
   forgotPasswordMailgenContent,
   sendEmail,
 } from "../../../utils/mail.js";
+import { gstData } from "../../../models/apps/gst-numbers/gstData.models.js";
 
 const generateAccessAndRefreshTokens = async (userId) => {
   try {
@@ -46,6 +47,11 @@ const registerUser = asyncHandler(async (req, res) => {
       []
     );
   }
+  const verifiedGst = await gstData.findOne({ gstNumber });
+  if (!verifiedGst) {
+    throw new ApiError(422, "gstNumber not verified", []);
+  }
+
   const user = await User.create({
     gstNumber,
     email,

@@ -59,7 +59,7 @@ const verifyGSTNController = asyncHandler(async (req, res) => {
     // Create the result object
     const result = {
       gstNumber: gstin,
-      businessName: legal_business_name
+      companyName: legal_business_name
         ? legal_business_name
         : trade_name
         ? trade_name
@@ -69,7 +69,7 @@ const verifyGSTNController = asyncHandler(async (req, res) => {
       ownerName: "",
       hqLocation: principal_place_of_business || "",
       serviceLocation: principal_place_of_business || "",
-      yearOfEstablishment: Date(effective_date_of_reg) || "",
+      yearOfEstablishment: effective_date_of_reg || "",
       service: goods_and_services_list[0].goods_services_desc || [],
     };
 
